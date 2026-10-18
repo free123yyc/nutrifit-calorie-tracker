@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriFit AI - Calorie Tracker & Meal Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800 antialiased bg-slate-50">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md">
+                            <i class="fa-solid fa-leaf text-xl"></i>
+                        </div>
+                        <span class="font-bold text-xl text-slate-900 tracking-tight">NutriFit <span class="text-brand-600">AI</span></span>
+                    </div>
+                    <!-- Navigation Tabs -->
+                    <nav class="hidden sm:ml-8 sm:flex sm:space-x-4" id="desktop-nav">
+                        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-brand-700 bg-brand-50 border-b-2 border-brand-600">
+                            <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard
+                        </button>
+                        <button onclick="switchTab('mealplanner')" id="nav-mealplanner" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                            <i class="fa-solid fa-calendar-days mr-1.5"></i> 7-Day Plan
+                        </button>
+                        <button onclick="switchTab('aicoach')" id="nav-aicoach" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                            <i class="fa-solid fa-robot mr-1.5"></i> General AI Chat
+                        </button>
+                        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                            <i class="fa-solid fa-gear mr-1.5"></i> Settings
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- API Key Status Badge & Mobile Menu Button -->
+                <div class="flex items-center gap-3">
+                    <div id="api-status-badge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="api-status-text">Gemini Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Row -->
+        <div class="sm:hidden border-t border-slate-200 bg-white px-2 py-2 flex justify-around">
+            <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mob-nav-btn text-xs font-medium p-2 text-brand-600 flex flex-col items-center">
+                <i class="fa-solid fa-chart-pie text-base"></i> Tracker
+            </button>
+            <button onclick="switchTab('mealplanner')" id="mob-nav-mealplanner" class="mob-nav-btn text-xs font-medium p-2 text-slate-500 flex flex-col items-center">
+                <i class="fa-solid fa-calendar-days text-base"></i> 7-Day Plan
+            </button>
+            <button onclick="switchTab('aicoach')" id="mob-nav-aicoach" class="mob-nav-btn text-xs font-medium p-2 text-slate-500 flex flex-col items-center">
+                <i class="fa-solid fa-robot text-base"></i> AI Chat
+            </button>
+            <button onclick="switchTab('settings')" id="mob-nav-settings" class="mob-nav-btn text-xs font-medium p-2 text-slate-500 flex flex-col items-center">
+                <i class="fa-solid fa-gear text-base"></i> Settings
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: DASHBOARD & CALORIE TRACKER -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- Calorie & Macro Header Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Calorie Target Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">Daily Calorie Summary</h2>
+                            <p class="text-xs text-slate-500">Track your daily intake vs goal</p>
+                        </div>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-brand-50 text-brand-700">Today</span>
+                    </div>
+
+                    <div class="flex items-center justify-around my-2">
+                        <!-- Circular Progress Visual -->
+                        <div class="relative w-36 h-36 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-slate-100" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="calorie-progress-circle" class="text-brand-500 stroke-current transition-all duration-500 ease-out" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="absolute flex flex-col items-center text-center">
+                                <span id="calories-consumed" class="text-2xl font-extrabold text-slate-800">0</span>
+                                <span class="text-xs font-medium text-slate-400">/ <span id="calories-target">2000</span> kcal</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <div class="text-slate-400 text-xs font-medium">Remaining</div>
+                                <div id="calories-remaining" class="text-xl font-bold text-brand-600">2000 kcal</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-400 text-xs font-medium">Logged Meals</div>
+                                <div id="meals-count" class="text-base font-semibold text-slate-700">0 items</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Macros Breakdown Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col justify-between">
+                    <div class="mb-4">
+                        <h2 class="text-lg font-bold text-slate-800">Macronutrients Target</h2>
+                        <p class="text-xs text-slate-500">Daily balance of Protein, Carbs, and Healthy Fats</p>
+                    </div>
+
+                    <div class="space-y-4 my-auto">
+                        <!-- Protein Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-700"><i class="fa-solid fa-drumstick-bite text-amber-500 mr-1"></i> Protein</span>
+                                <span id="protein-text" class="text-slate-500">0g / 130g</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                <div id="protein-bar" class="bg-amber-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Carbs Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-700"><i class="fa-solid fa-wheat-awn text-blue-500 mr-1"></i> Carbohydrates</span>
+                                <span id="carbs-text" class="text-slate-500">0g / 225g</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                <div id="carbs-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fats Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-slate-700"><i class="fa-solid fa-avocado text-emerald-500 mr-1"></i> Healthy Fats</span>
+                                <span id="fats-text" class="text-slate-500">0g / 60g</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                <div id="fats-bar" class="bg-emerald-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Add Meal & Daily Log List -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Add Custom Meal Form -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-brand-600"></i> Quick Log Food
+                    </h3>
+                    <form id="add-meal-form" class="space-y-3" onsubmit="handleManualMealAdd(event)">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Meal Name</label>
+                            <input type="text" id="meal-name" required placeholder="e.g. Grilled Chicken Salad" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Calories (kcal)</label>
+                                <input type="number" id="meal-calories" required min="0" placeholder="350" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Protein (g)</label>
+                                <input type="number" id="meal-protein" min="0" value="0" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Carbs (g)</label>
+                                <input type="number" id="meal-carbs" min="0" value="0" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Fats (g)</label>
+                                <input type="number" id="meal-fats" min="0" value="0" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full mt-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-xl transition-colors shadow-sm text-sm">
+                            Add Meal to Log
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Logged Meals List -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base font-bold text-slate-800">Today's Meal Log</h3>
+                        <button onclick="clearTodayLog()" class="text-xs text-rose-500 hover:text-rose-700 font-medium transition-colors">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Clear Log
+                        </button>
+                    </div>
+
+                    <div id="logged-meals-list" class="flex-1 overflow-y-auto max-h-80 space-y-3 divide-y divide-slate-100">
+                        <!-- Dynamic Meal Items Will Render Here -->
+                        <div class="text-center py-10 text-slate-400 text-sm">
+                            <i class="fa-solid fa-utensils text-2xl mb-2 text-slate-300 block"></i>
+                            No meals logged for today yet.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: 7-DAY MEAL PLANNER WITH DIRECT AI CHAT -->
+        <section id="tab-mealplanner" class="tab-content hidden space-y-6">
+            <!-- Planner Configuration Top Bar -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">AI 7-Day Meal Planner</h2>
+                        <p class="text-xs text-slate-500">Custom tailored weekly nutrition plan based on your preferences</p>
+                    </div>
+                    <button onclick="generateWeeklyPlanAI()" id="btn-generate-plan" class="bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-sm text-sm transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Complete 7-Day Plan
+                    </button>
+                </div>
+
+                <!-- Parameters Bar -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">Goal</label>
+                        <select id="plan-goal" class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-medium text-slate-700">
+                            <option value="Weight Loss">Weight Loss (Deficit)</option>
+                            <option value="Muscle Gain">Muscle Gain (Surplus)</option>
+                            <option value="Maintenance" selected>Maintenance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">Diet Type</label>
+                        <select id="plan-diet" class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-medium text-slate-700">
+                            <option value="Balanced">Balanced / Standard</option>
+                            <option value="High Protein">High Protein</option>
+                            <option value="Low Carb">Low Carb / Keto</option>
+                            <option value="Vegetarian">Vegetarian</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">Target Calories/Day</label>
+                        <input type="number" id="plan-calories-target" value="2000" class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-medium text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">Cuisine / Notes</label>
+                        <input type="text" id="plan-notes" placeholder="e.g. Quick cook, Asian style" class="w-full border border-slate-200 rounded-lg p-2 bg-slate-50 font-medium text-slate-700">
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Dedicated 7-Day Plan AI Chat Assistant -->
+            <div class="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-2xl p-5 shadow-lg border border-emerald-800/50">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">7-Day Plan AI Editor</h3>
+                        <p class="text-xs text-emerald-300">Ask AI to modify, replace, or remove items from your active 7-day schedule</p>
+                    </div>
+                </div>
+
+                <!-- Chat Quick Suggestions -->
+                <div class="flex flex-wrap gap-2 my-3">
+                    <button onclick="setPlanChatPrompt('I don\'t want to eat snack. Remove it from the 7-day plan.')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-200 px-3 py-1 rounded-full border border-emerald-800/40 transition-colors">
+                        🚫 Remove snacks from plan
+                    </button>
+                    <button onclick="setPlanChatPrompt('Make all lunches quick meal prep options under 15 minutes.')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-200 px-3 py-1 rounded-full border border-emerald-800/40 transition-colors">
+                        ⏱️ Make lunches fast & easy
+                    </button>
+                    <button onclick="setPlanChatPrompt('Replace chicken with fish or tofu for all dinners.')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-200 px-3 py-1 rounded-full border border-emerald-800/40 transition-colors">
+                        🐟 Replace chicken with fish/tofu
+                    </button>
+                </div>
+
+                <!-- Input Row -->
+                <form id="plan-chat-form" onsubmit="handlePlanChatModify(event)" class="flex gap-2">
+                    <input type="text" id="plan-chat-input" placeholder="e.g. 'I don't want to eat snack. remove it in the 7-day plan'" class="flex-1 text-sm bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="submit" id="btn-plan-chat-send" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-1.5 shrink-0">
+                        <span>Modify Plan</span>
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+                <div id="plan-chat-status" class="text-xs text-emerald-400 mt-2 hidden flex items-center gap-2">
+                    <i class="fa-solid fa-spinner animate-spin"></i> Updating your 7-day plan via Gemini...
+                </div>
+            </div>
+
+            <!-- 7-Day Interactive Grid Display -->
+            <div id="plan-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Day Cards populated dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 3: GENERAL AI NUTRITION COACH -->
+        <section id="tab-aicoach" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[650px]">
+                <!-- Chat Header -->
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800">NutriFit General AI Assistant</h3>
+                            <p class="text-xs text-slate-500">Ask questions, get recipes, advice, and macro guidance</p>
+                        </div>
+                    </div>
+                    <button onclick="resetGeneralChat()" class="text-xs text-slate-500 hover:text-slate-800 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Clear Chat
+                    </button>
+                </div>
+
+                <!-- Chat History Messages Container -->
+                <div id="general-chat-box" class="flex-1 p-4 overflow-y-auto space-y-4">
+                    <!-- Default AI welcome message -->
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold shrink-0">AI</div>
+                        <div class="bg-slate-100 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-800 max-w-xl shadow-sm">
+                            Hello! I am your AI Nutrition & Fitness Coach. Ask me anything about healthy meals, dietary advice, or calorie tracking!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <div class="p-4 border-t border-slate-100 bg-white rounded-b-2xl">
+                    <form id="general-chat-form" onsubmit="handleGeneralChat(event)" class="flex gap-2">
+                        <input type="text" id="general-chat-input" placeholder="Ask a question about food, nutrition or meal ideas..." class="flex-1 text-sm border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <button type="submit" id="btn-general-send" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-5 py-3 rounded-xl text-sm transition-colors flex items-center gap-2">
+                            <span>Send</span>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SETTINGS & CONFIGURATION -->
+        <section id="tab-settings" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-2xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Settings & API Setup</h2>
+                    <p class="text-xs text-slate-500">Configure your personal target stats and Gemini API connection</p>
+                </div>
+
+                <!-- Gemini API Key Input -->
+                <div class="space-y-2 pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-semibold text-slate-700">Google Gemini API Key (Optional Override)</label>
+                    <p class="text-xs text-slate-500">By default, the app uses built-in seamless Gemini integration. You can specify a custom key if desired.</p>
+                    <input type="password" id="custom-api-key" placeholder="AIzaSy..." class="w-full text-sm border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <button onclick="saveCustomApiKey()" class="mt-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2 rounded-lg">
+                        Save Key
+                    </button>
+                </div>
+
+                <!-- Daily Target Macros Setup -->
+                <div class="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 class="text-sm font-semibold text-slate-700">Customize Daily Calorie Target</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Target Calories (kcal)</label>
+                            <input type="number" id="setting-target-calories" value="2000" class="w-full text-sm border border-slate-300 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Protein Target (g)</label>
+                            <input type="number" id="setting-target-protein" value="130" class="w-full text-sm border border-slate-300 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Carbs Target (g)</label>
+                            <input type="number" id="setting-target-carbs" value="225" class="w-full text-sm border border-slate-300 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Fats Target (g)</label>
+                            <input type="number" id="setting-target-fats" value="60" class="w-full text-sm border border-slate-300 rounded-xl p-2.5">
+                        </div>
+                    </div>
+                    <button onclick="saveMacroTargets()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl transition-colors">
+                        Save Goals
+                    </button>
+                </div>
+
+                <!-- Reset All App Data -->
+                <div class="pt-4 border-t border-slate-100">
+                    <button onclick="resetAllAppData()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Reset All Data & Logs
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* APP STATE MANAGEMENT */
+        const DEFAULT_STATE = {
+            targets: {
+                calories: 2000,
+                protein: 130,
+                carbs: 225,
+                fats: 60
+            },
+            loggedMeals: [],
+            weeklyPlan: null,
+            customApiKey: ""
+        };
+
+        let appState = JSON.parse(localStorage.getItem('nutrifit_app_state')) || DEFAULT_STATE;
+
+        // Save state helper
+        function saveState() {
+            localStorage.setItem('nutrifit_app_state', JSON.stringify(appState));
+            renderDashboard();
+        }
+
+        /* DEFAULT 7-DAY MEAL PLAN GENERATOR (INITIAL FALLBACK DATA) */
+        const SAMPLE_7_DAY_PLAN = [
+            {
+                day: "Monday",
+                breakfast: { name: "Oatmeal with Berries & Chia", calories: 350, protein: 12, carbs: 55, fats: 8 },
+                lunch: { name: "Grilled Chicken Salad & Olive Oil", calories: 520, protein: 45, carbs: 15, fats: 22 },
+                dinner: { name: "Baked Salmon with Quinoa & Asparagus", calories: 600, protein: 42, carbs: 40, fats: 24 },
+                snack: { name: "Greek Yogurt with Almonds", calories: 220, protein: 18, carbs: 12, fats: 9 }
+            },
+            {
+                day: "Tuesday",
+                breakfast: { name: "Scrambled Eggs with Spinach & Whole Toast", calories: 380, protein: 22, carbs: 28, fats: 18 },
+                lunch: { name: "Turkey & Avocada Wrap", calories: 490, protein: 35, carbs: 42, fats: 19 },
+                dinner: { name: "Lean Beef Stir-fry with Broccoli & Brown Rice", calories: 580, protein: 40, carbs: 52, fats: 18 },
+                snack: { name: "Apple Slices with Peanut Butter", calories: 200, protein: 5, carbs: 24, fats: 10 }
+            },
+            {
+                day: "Wednesday",
+                breakfast: { name: "Protein Berry Smoothie Bowl", calories: 360, protein: 28, carbs: 45, fats: 6 },
+                lunch: { name: "Mediterranean Tuna Salad Plate", calories: 480, protein: 38, carbs: 20, fats: 22 },
+                dinner: { name: "Grilled Shrimp Tacos with Cabbage Slaw", calories: 550, protein: 36, carbs: 48, fats: 16 },
+                snack: { name: "Handful of Mixed Nuts", calories: 180, protein: 6, carbs: 8, fats: 15 }
+            },
+            {
+                day: "Thursday",
+                breakfast: { name: "Avocado Toast with Poached Egg", calories: 370, protein: 16, carbs: 32, fats: 20 },
+                lunch: { name: "Chicken and Sweet Potato Bowl", calories: 530, protein: 42, carbs: 50, fats: 14 },
+                dinner: { name: "Turkey Meatballs with Zucchini Noodles", calories: 490, protein: 38, carbs: 22, fats: 20 },
+                snack: { name: "Cottage Cheese & Pineapple", calories: 190, protein: 16, carbs: 18, fats: 4 }
+            },
+            {
+                day: "Friday",
+                breakfast: { name: "Greek Yogurt Parfait with Granola", calories: 340, protein: 20, carbs: 42, fats: 8 },
+                lunch: { name: "Quinoa Chickpea Salad Bowl", calories: 460, protein: 18, carbs: 62, fats: 14 },
+                dinner: { name: "Grilled Steak with Roasted Vegetables", calories: 620, protein: 48, carbs: 25, fats: 28 },
+                snack: { name: "Protein Shake", calories: 180, protein: 25, carbs: 6, fats: 3 }
+            },
+            {
+                day: "Saturday",
+                breakfast: { name: "Whole Grain Banana Pancakes", calories: 410, protein: 14, carbs: 68, fats: 8 },
+                lunch: { name: "Grilled Chicken Caesar Wrap", calories: 510, protein: 38, carbs: 38, fats: 20 },
+                dinner: { name: "Baked Cod with Herb Butter & Couscous", calories: 530, protein: 39, carbs: 44, fats: 16 },
+                snack: { name: "Dark Chocolate & Almonds", calories: 190, protein: 4, carbs: 16, fats: 12 }
+            },
+            {
+                day: "Sunday",
+                breakfast: { name: "Omelette with Mushrooms, Peppers & Cheese", calories: 390, protein: 24, carbs: 10, fats: 26 },
+                lunch: { name: "Salmon Poke Bowl with Edamame", calories: 560, protein: 36, carbs: 54, fats: 20 },
+                dinner: { name: "Roast Chicken Breast with Mash & Green Beans", calories: 580, protein: 46, carbs: 42, fats: 18 },
+                snack: { name: "Rice Cakes with Almond Butter", calories: 170, protein: 5, carbs: 20, fats: 8 }
+            }
+        ];
+
+        // On initial startup, if no plan exists, use the default sample plan
+        if (!appState.weeklyPlan || appState.weeklyPlan.length === 0) {
+            appState.weeklyPlan = SAMPLE_7_DAY_PLAN;
+            saveState();
+        }
+
+        /* NAVIGATION TAB SWITCHING logic */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Style desktop nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = 'nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.className = 'nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors text-brand-700 bg-brand-50 border-b-2 border-brand-600';
+            }
+
+            // Style mobile nav
+            document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                btn.classList.replace('text-brand-600', 'text-slate-500');
+            });
+            const activeMobNav = document.getElementById(`mob-nav-${tabId}`);
+            if (activeMobNav) {
+                activeMobNav.classList.replace('text-slate-500', 'text-brand-600');
+            }
+        }
+
+        /* RENDER DASHBOARD & CALORIE PROGRESS */
+        function renderDashboard() {
+            const consumedCal = appState.loggedMeals.reduce((sum, item) => sum + Number(item.calories || 0), 0);
+            const consumedProt = appState.loggedMeals.reduce((sum, item) => sum + Number(item.protein || 0), 0);
+            const consumedCarbs = appState.loggedMeals.reduce((sum, item) => sum + Number(item.carbs || 0), 0);
+            const consumedFats = appState.loggedMeals.reduce((sum, item) => sum + Number(item.fats || 0), 0);
+
+            const targetCal = appState.targets.calories;
+            const remainingCal = Math.max(0, targetCal - consumedCal);
+
+            // Update DOM numbers
+            document.getElementById('calories-consumed').textContent = consumedCal;
+            document.getElementById('calories-target').textContent = targetCal;
+            document.getElementById('calories-remaining').textContent = `${remainingCal} kcal`;
+            document.getElementById('meals-count').textContent = `${appState.loggedMeals.length} item(s)`;
+
+            // Update SVG Progress Donut Circle
+            const percentCal = Math.min(100, Math.round((consumedCal / targetCal) * 100));
+            const progressCircle = document.getElementById('calorie-progress-circle');
+            progressCircle.setAttribute('stroke-dasharray', `${percentCal}, 100`);
+
+            // Update Macros Bars
+            updateMacroBar('protein', consumedProt, appState.targets.protein);
+            updateMacroBar('carbs', consumedCarbs, appState.targets.carbs);
+            updateMacroBar('fats', consumedFats, appState.targets.fats);
+
+            // Render Logged Meals List
+            const listEl = document.getElementById('logged-meals-list');
+            if (appState.loggedMeals.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 text-sm">
+                        <i class="fa-solid fa-utensils text-2xl mb-2 text-slate-300 block"></i>
+                        No meals logged for today yet.
+                    </div>`;
+            } else {
+                listEl.innerHTML = appState.loggedMeals.map((meal, index) => `
+                    <div class="flex items-center justify-between pt-3 text-sm">
+                        <div>
+                            <div class="font-semibold text-slate-800">${escapeHtml(meal.name)}</div>
+                            <div class="text-xs text-slate-400">
+                                P: ${meal.protein}g | C: ${meal.carbs}g | F: ${meal.fats}g
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-slate-700 text-sm">${meal.calories} kcal</span>
+                            <button onclick="removeMealItem(${index})" class="text-slate-300 hover:text-rose-500 transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateMacroBar(macro, current, target) {
+            const percent = Math.min(100, Math.round((current / target) * 100));
+            document.getElementById(`${macro}-text`).textContent = `${current}g / ${target}g`;
+            document.getElementById(`${macro}-bar`).style.width = `${percent}%`;
+        }
+
+        function handleManualMealAdd(e) {
+            e.preventDefault();
+            const newMeal = {
+                name: document.getElementById('meal-name').value.trim(),
+                calories: Number(document.getElementById('meal-calories').value) || 0,
+                protein: Number(document.getElementById('meal-protein').value) || 0,
+                carbs: Number(document.getElementById('meal-carbs').value) || 0,
+                fats: Number(document.getElementById('meal-fats').value) || 0,
+            };
+
+            appState.loggedMeals.push(newMeal);
+            saveState();
+
+            // Reset Form
+            document.getElementById('add-meal-form').reset();
+        }
+
+        function removeMealItem(index) {
+            appState.loggedMeals.splice(index, 1);
+            saveState();
+        }
+
+        function clearTodayLog() {
+            appState.loggedMeals = [];
+            saveState();
+        }
+
+        /* RENDER 7-DAY MEAL PLAN GRID UI */
+        function renderWeeklyPlan() {
+            const container = document.getElementById('plan-cards-container');
+            if (!appState.weeklyPlan || appState.weeklyPlan.length === 0) {
+                container.innerHTML = `<div class="col-span-3 text-center py-10 text-slate-400">No plan available. Click Generate Plan above!</div>`;
+                return;
+            }
+
+            container.innerHTML = appState.weeklyPlan.map((dayData, dayIdx) => {
+                let totalDayCal = 0;
+                ['breakfast', 'lunch', 'dinner', 'snack'].forEach(type => {
+                    if (dayData[type]) totalDayCal += (dayData[type].calories || 0);
+                });
+
+                return `
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 text-base">${escapeHtml(dayData.day || `Day ${dayIdx+1}`)}</h3>
+                            <span class="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">~${totalDayCal} kcal</span>
+                        </div>
+
+                        <div class="space-y-3 text-xs">
+                            ${renderMealRow(dayData.day, 'Breakfast', dayData.breakfast, 'sun')}
+                            ${renderMealRow(dayData.day, 'Lunch', dayData.lunch, 'utensils')}
+                            ${renderMealRow(dayData.day, 'Dinner', dayData.dinner, 'moon')}
+                            ${dayData.snack ? renderMealRow(dayData.day, 'Snack', dayData.snack, 'cookie') : ''}
+                        </div>
+                    </div>
+
+                    <button onclick="logEntireDayMeals(${dayIdx})" class="w-full mt-4 bg-slate-50 hover:bg-brand-50 hover:text-brand-700 text-slate-600 border border-slate-200 hover:border-brand-300 font-medium py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-plus text-xs"></i> Log This Day to Tracker
+                    </button>
+                </div>
+            `}).join('');
+        }
+
+        function renderMealRow(dayName, label, mealObj, icon) {
+            if (!mealObj || !mealObj.name) return '';
+            return `
+                <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="flex justify-between font-semibold text-slate-700 mb-0.5">
+                        <span class="text-slate-500 uppercase tracking-wider text-[10px]"><i class="fa-solid fa-${icon} text-amber-500 mr-1"></i> ${label}</span>
+                        <span class="text-slate-600 font-bold">${mealObj.calories || 0} kcal</span>
+                    </div>
+                    <div class="font-medium text-slate-800 text-xs">${escapeHtml(mealObj.name)}</div>
+                    <div class="text-[10px] text-slate-400 mt-1">
+                        P: ${mealObj.protein || 0}g | C: ${mealObj.carbs || 0}g | F: ${mealObj.fats || 0}g
+                    </div>
+                </div>
+            `;
+        }
+
+        function logEntireDayMeals(dayIdx) {
+            const dayData = appState.weeklyPlan[dayIdx];
+            if (!dayData) return;
+
+            let addedCount = 0;
+            ['breakfast', 'lunch', 'dinner', 'snack'].forEach(mealType => {
+                if (dayData[mealType] && dayData[mealType].name) {
+                    appState.loggedMeals.push({
+                        name: `${dayData.day} ${mealType.toUpperCase()}: ${dayData[mealType].name}`,
+                        calories: Number(dayData[mealType].calories || 0),
+                        protein: Number(dayData[mealType].protein || 0),
+                        carbs: Number(dayData[mealType].carbs || 0),
+                        fats: Number(dayData[mealType].fats || 0)
+                    });
+                    addedCount++;
+                }
+            });
+
+            saveState();
+            switchTab('dashboard');
+        }
+
+        /* GEMINI API CALL HELPER FUNCTION */
+        async function callGeminiAPI(systemPrompt, userQuery) {
+            const apiKey = appState.customApiKey || "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            let response;
+            let retries = 0;
+            const maxRetries = 3;
+
+            while (retries < maxRetries) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) break;
+                } catch (err) {
+                    console.debug("Fetch attempt failed, retrying...", err);
+                }
+                retries++;
+                await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries)));
+            }
+
+            if (!response || !response.ok) {
+                throw new Error("API call failed after retries.");
+            }
+
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        }
+
+        /* GENERATE FULL 7-DAY MEAL PLAN WITH AI */
+        async function generateWeeklyPlanAI() {
+            const btn = document.getElementById('btn-generate-plan');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generating Plan...`;
+
+            const goal = document.getElementById('plan-goal').value;
+            const diet = document.getElementById('plan-diet').value;
+            const targetCal = document.getElementById('plan-calories-target').value;
+            const notes = document.getElementById('plan-notes').value;
+
+            const systemPrompt = `You are a professional nutritionist API. Respond ONLY with a valid JSON array representing a 7-day meal plan.
+Do NOT include markdown formatting like \`\`\`json or explanation text.
+Each array object must match this schema:
+{
+  "day": "Monday",
+  "breakfast": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+  "lunch": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+  "dinner": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+  "snack": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number}
+}`;
+
+            const userPrompt = `Create a 7-day meal plan with goal: ${goal}, diet style: ${diet}, daily calorie limit approx ${targetCal} kcal. Additional request: ${notes}`;
+
+            try {
+                const rawText = await callGeminiAPI(systemPrompt, userPrompt);
+                const cleanedJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsedPlan = JSON.parse(cleanedJson);
+
+                if (Array.isArray(parsedPlan) && parsedPlan.length > 0) {
+                    appState.weeklyPlan = parsedPlan;
+                    saveState();
+                    renderWeeklyPlan();
+                }
+            } catch (err) {
+                console.error("Failed to generate plan:", err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Complete 7-Day Plan`;
+            }
+        }
+
+        /* DEDICATED 7-DAY PLAN AI CHAT ASSISTANT HANDLER */
+        function setPlanChatPrompt(text) {
+            document.getElementById('plan-chat-input').value = text;
+        }
+
+        async function handlePlanChatModify(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('plan-chat-input');
+            const userInstruction = inputEl.value.trim();
+            if (!userInstruction) return;
+
+            const statusEl = document.getElementById('plan-chat-status');
+            const sendBtn = document.getElementById('btn-plan-chat-send');
+
+            sendBtn.disabled = true;
+            statusEl.classList.remove('hidden');
+
+            const systemPrompt = `You are an AI nutrition meal plan editor. You modify an existing 7-day meal plan according to user feedback.
+IMPORTANT INSTRUCTIONS:
+1. Always respond with ONLY a valid JSON array of 7 objects (Monday to Sunday).
+2. Do NOT use markdown code blocks like \`\`\`json. Return raw JSON string only.
+3. If the user asks to remove an item (e.g., "I don't want to eat snack", "remove snack"), set that meal property to null or remove the "snack" key entirely from all days.
+4. Keep the output strictly conforming to:
+[
+  {
+    "day": "Monday",
+    "breakfast": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+    "lunch": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+    "dinner": {"name": string, "calories": number, "protein": number, "carbs": number, "fats": number},
+    "snack": null OR omit
+  }, ...
+]`;
+
+            const currentPlanJsonStr = JSON.stringify(appState.weeklyPlan);
+            const userPrompt = `Current 7-Day Plan JSON:\n${currentPlanJsonStr}\n\nUSER MODIFICATION REQUEST:\n"${userInstruction}"\n\nPlease update the entire 7-day plan JSON accordingly.`;
+
+            try {
+                const rawText = await callGeminiAPI(systemPrompt, userPrompt);
+                const cleanedJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const updatedPlan = JSON.parse(cleanedJson);
+
+                if (Array.isArray(updatedPlan) && updatedPlan.length > 0) {
+                    appState.weeklyPlan = updatedPlan;
+                    saveState();
+                    renderWeeklyPlan();
+                    inputEl.value = '';
+                }
+            } catch (err) {
+                console.error("Error modifying plan with AI:", err);
+            } finally {
+                sendBtn.disabled = false;
+                statusEl.classList.add('hidden');
+            }
+        }
+
+        /* GENERAL AI CHATBOT HANDLER */
+        async function handleGeneralChat(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('general-chat-input');
+            const query = inputEl.value.trim();
+            if (!query) return;
+
+            const chatBox = document.getElementById('general-chat-box');
+
+            // Render User Message
+            chatBox.innerHTML += `
+                <div class="flex items-start justify-end gap-3">
+                    <div class="bg-brand-600 text-white rounded-2xl rounded-tr-none p-3.5 text-sm max-w-xl shadow-sm">
+                        ${escapeHtml(query)}
+                    </div>
+                </div>
+            `;
+            inputEl.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Render Loading Bubble
+            const loadingId = 'loading-' + Date.now();
+            chatBox.innerHTML += `
+                <div id="${loadingId}" class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold shrink-0">AI</div>
+                    <div class="bg-slate-100 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-500">
+                        <i class="fa-solid fa-circle-notch animate-spin mr-2"></i> Thinking...
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const systemPrompt = "You are NutriFit AI, a helpful, empathetic, and expert fitness & nutrition coach. Keep responses structured, concise, and easy to read.";
+
+            try {
+                const aiReply = await callGeminiAPI(systemPrompt, query);
+                document.getElementById(loadingId).remove();
+
+                chatBox.innerHTML += `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold shrink-0">AI</div>
+                        <div class="bg-slate-100 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-800 max-w-xl shadow-sm whitespace-pre-line">
+                            ${escapeHtml(aiReply)}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                chatBox.innerHTML += `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-sm font-bold shrink-0">AI</div>
+                        <div class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl rounded-tl-none p-3.5 text-sm max-w-xl shadow-sm">
+                            Sorry, I encountered an issue connecting to the AI model. Please check your network or API settings.
+                        </div>
+                    </div>
+                `;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function resetGeneralChat() {
+            document.getElementById('general-chat-box').innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold shrink-0">AI</div>
+                    <div class="bg-slate-100 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-800 max-w-xl shadow-sm">
+                        Hello! I am your AI Nutrition & Fitness Coach. Ask me anything about healthy meals, dietary advice, or calorie tracking!
+                    </div>
+                </div>
+            `;
+        }
+
+        /* SETTINGS & UTILS */
+        function saveCustomApiKey() {
+            const key = document.getElementById('custom-api-key').value.trim();
+            appState.customApiKey = key;
+            saveState();
+            alert("API key saved successfully!");
+        }
+
+        function saveMacroTargets() {
+            appState.targets = {
+                calories: Number(document.getElementById('setting-target-calories').value) || 2000,
+                protein: Number(document.getElementById('setting-target-protein').value) || 130,
+                carbs: Number(document.getElementById('setting-target-carbs').value) || 225,
+                fats: Number(document.getElementById('setting-target-fats').value) || 60,
+            };
+            saveState();
+            alert("Goal targets updated!");
+        }
+
+        function resetAllAppData() {
+            localStorage.removeItem('nutrifit_app_state');
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            appState.weeklyPlan = SAMPLE_7_DAY_PLAN;
+            saveState();
+            renderWeeklyPlan();
+            alert("App data reset to initial default state.");
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        /* INITIALIZATION ON LOAD */
+        window.onload = function () {
+            // Fill settings inputs
+            document.getElementById('setting-target-calories').value = appState.targets.calories;
+            document.getElementById('setting-target-protein').value = appState.targets.protein;
+            document.getElementById('setting-target-carbs').value = appState.targets.carbs;
+            document.getElementById('setting-target-fats').value = appState.targets.fats;
+            if (appState.customApiKey) {
+                document.getElementById('custom-api-key').value = appState.customApiKey;
+            }
+
+            renderDashboard();
+            renderWeeklyPlan();
+        };
+    </script>
+</body>
+</html>
